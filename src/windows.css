@@ -1,0 +1,202 @@
+/* =========================================================
+   Window chrome
+   ========================================================= */
+.window {
+  position: absolute;
+  background: var(--window-bg);
+  border: 1px solid var(--window-border);
+  border-top: none;
+  box-shadow: var(--shadow-window);
+  display: flex; flex-direction: column;
+  min-width: 300px;
+  min-height: 180px;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+}
+
+.window.maximized {
+  border-radius: 0;
+}
+
+.titlebar {
+  height: 28px;
+  background: linear-gradient(180deg,
+    var(--titlebar-top) 0%,
+    var(--titlebar-mid) 50%,
+    var(--titlebar-bot) 100%);
+  color: var(--titlebar-text);
+  display: flex; align-items: center;
+  padding: 0 4px 0 8px;
+  gap: 8px;
+  cursor: grab;
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+  user-select: none;
+  flex-shrink: 0;
+}
+.titlebar:active { cursor: grabbing; }
+.window.inactive .titlebar {
+  background: linear-gradient(180deg,
+    oklch(0.55 0.02 260),
+    oklch(0.42 0.02 262));
+}
+
+.titlebar-icon {
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+}
+.titlebar-title {
+  flex: 1;
+  font-weight: 700;
+  font-size: 12px;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.titlebar-buttons {
+  display: flex; gap: 2px;
+}
+.tb-btn {
+  width: 22px; height: 20px;
+  display: grid; place-items: center;
+  border: 1px solid oklch(0.92 0.02 250);
+  background: linear-gradient(180deg,
+    oklch(0.62 0.14 258),
+    oklch(0.42 0.16 262));
+  color: #fff;
+  font-family: "Marlett", var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 3px;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.3);
+}
+.tb-btn:hover { filter: brightness(1.15); }
+.tb-btn:active { filter: brightness(0.88); }
+.tb-btn.close {
+  background: linear-gradient(180deg,
+    oklch(0.70 0.20 28),
+    oklch(0.48 0.22 28));
+}
+
+/* Window body */
+.window-body {
+  flex: 1;
+  overflow: hidden;
+  background: var(--window-bg);
+  display: flex; flex-direction: column;
+  min-height: 0;
+}
+
+/* Resize handle */
+.resize-handle {
+  position: absolute;
+  right: 0; bottom: 0;
+  width: 16px; height: 16px;
+  cursor: nwse-resize;
+  background:
+    linear-gradient(135deg,
+      transparent 0 35%,
+      oklch(0.60 0.02 260) 35% 40%,
+      transparent 40% 55%,
+      oklch(0.60 0.02 260) 55% 60%,
+      transparent 60% 75%,
+      oklch(0.60 0.02 260) 75% 80%,
+      transparent 80%);
+  z-index: 5;
+}
+
+/* Menubar inside window */
+.menubar {
+  display: flex;
+  background: var(--window-chrome);
+  border-bottom: 1px solid var(--panel-border);
+  padding: 2px 4px;
+  font-size: 11px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.menubar-item {
+  padding: 3px 8px;
+  color: var(--fg);
+  cursor: default;
+  border-radius: 2px;
+}
+.menubar-item:hover {
+  background: oklch(0.62 0.14 258);
+  color: #fff;
+}
+
+/* Toolbar (explorer-style) */
+.toolbar {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 8px;
+  background: linear-gradient(180deg, var(--window-chrome), var(--window-chrome-dark));
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.toolbar-btn {
+  display: flex; align-items: center; gap: 4px;
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: var(--fg);
+}
+.toolbar-btn:hover {
+  border-color: var(--panel-border);
+  background: var(--panel-alt);
+}
+.toolbar-btn:disabled {
+  color: var(--fg-muted);
+  cursor: default;
+}
+.toolbar-btn:disabled:hover {
+  border-color: transparent;
+  background: transparent;
+}
+.toolbar-sep {
+  width: 1px; height: 18px;
+  background: var(--panel-border);
+  margin: 0 2px;
+}
+
+/* Address bar */
+.addressbar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 8px;
+  background: var(--window-chrome);
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.addressbar-label { color: var(--fg-muted); }
+.addressbar-input {
+  flex: 1;
+  padding: 3px 6px;
+  background: var(--window-bg);
+  border: 1px solid var(--panel-border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg);
+}
+
+/* Statusbar */
+.statusbar {
+  display: flex;
+  background: var(--window-chrome);
+  border-top: 1px solid var(--panel-border);
+  padding: 2px 6px;
+  font-size: 11px;
+  color: var(--fg-muted);
+  flex-shrink: 0;
+  gap: 12px;
+}
+.statusbar-cell {
+  border: 1px solid var(--panel-border);
+  border-top: none; border-left: none;
+  padding: 2px 6px;
+  min-width: 80px;
+}

@@ -225,7 +225,7 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
 /* Desktop title card (paper title as a watermark) */
 .desk-title {
   position: absolute;
-  right: 24px; bottom: 24px;
+  right: 24px; bottom: 20px;
   max-width: 420px;
   padding: 14px 18px;
   color: #fff;

@@ -37,7 +37,7 @@ function Wallpaper() {
       </defs>
       <rect width="1800" height="1000" fill="url(#glow)"/>
       {/* data matrix floating mid-screen */}
-      <g transform="translate(360, 260)">
+      <g transform="translate(360, 170)">
         {cells.map((cell, i) => {
           const size = 56, gap = 10;
           const x = cell.c * (size + gap);

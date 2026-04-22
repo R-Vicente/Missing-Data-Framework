@@ -1,163 +1,194 @@
 /* global React */
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useCallback } = React;
 
 function Game() {
+  const canvasRef = useRef(null);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(30);
-  const [gameActive, setGameActive] = useState(false);
-  const [holes, setHoles] = useState([]);
+  const [gameOver, setGameOver] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
 
-  const holesRef = useRef([]);
-  const intervalRef = useRef(null);
+  const GRID_SIZE = 15;
+  const CELL_SIZE = 28;
+  const snakeRef = useRef([{ x: 7, y: 7 }]);
+  const directionRef = useRef({ x: 1, y: 0 });
+  const foodRef = useRef({ x: 5, y: 5 });
+  const gameIntervalRef = useRef(null);
 
-  // Inicializa os 9 buracos
-  useEffect(() => {
-    const initial = Array.from({ length: 9 }, (_, i) => ({
-      id: i,
-      active: false,
-      symbol: Math.random() > 0.5 ? 'NaN' : '❓'
-    }));
-    setHoles(initial);
-    holesRef.current = initial;
+  const generateFood = useCallback(() => {
+    let newFood;
+    do {
+      newFood = {
+        x: Math.floor(Math.random() * GRID_SIZE),
+        y: Math.floor(Math.random() * GRID_SIZE)
+      };
+    } while (snakeRef.current.some(segment => segment.x === newFood.x && segment.y === newFood.y));
+    foodRef.current = newFood;
   }, []);
 
-  const startGame = () => {
-    setScore(0);
-    setTimeLeft(30);
-    setGameActive(true);
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
 
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    // Fundo dataset
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    let time = 30;
-
-    intervalRef.current = setInterval(() => {
-      time--;
-      setTimeLeft(time);
-
-      // Aparece um NaN novo
-      setHoles(prev => {
-        const newHoles = prev.map(h => ({ ...h, active: false }));
-        const randomIndex = Math.floor(Math.random() * 9);
-        newHoles[randomIndex].active = true;
-        holesRef.current = newHoles;
-        return newHoles;
-      });
-
-      // O NaN desaparece sozinho depois de 1.2 segundos
-      setTimeout(() => {
-        setHoles(prev => {
-          const newHoles = prev.map(h => h.active ? { ...h, active: false } : h);
-          holesRef.current = newHoles;
-          return newHoles;
-        });
-      }, 1200);
-
-      if (time <= 0) endGame();
-    }, 700);
-  };
-
-  const endGame = () => {
-    setGameActive(false);
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    // Grid lines (efeito dataset)
+    ctx.strokeStyle = '#1e2937';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= GRID_SIZE; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * CELL_SIZE, 0);
+      ctx.lineTo(i * CELL_SIZE, canvas.height);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, i * CELL_SIZE);
+      ctx.lineTo(canvas.width, i * CELL_SIZE);
+      ctx.stroke();
     }
-  };
 
-  const handleClick = (id) => {
-    if (!gameActive) return;
-
-    const hole = holesRef.current.find(h => h.id === id);
-    if (!hole || !hole.active) return;
-
-    // Aumenta score
-    setScore(s => s + 1);
-
-    // Remove imediatamente o NaN clicado
-    setHoles(prev => {
-      const newHoles = prev.map(h => h.id === id ? { ...h, active: false } : h);
-      holesRef.current = newHoles;
-      return newHoles;
+    // Snake (imputer)
+    ctx.fillStyle = '#22c55e';
+    snakeRef.current.forEach((segment, i) => {
+      ctx.fillRect(segment.x * CELL_SIZE + 2, segment.y * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+      if (i === 0) {
+        ctx.fillStyle = '#86efac';
+        ctx.fillRect(segment.x * CELL_SIZE + 8, segment.y * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
+        ctx.fillStyle = '#22c55e';
+      }
     });
+
+    // Food = NaN
+    ctx.font = '22px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('NaN', 
+      foodRef.current.x * CELL_SIZE + CELL_SIZE / 2, 
+      foodRef.current.y * CELL_SIZE + CELL_SIZE / 2);
+  }, []);
+
+  const moveSnake = useCallback(() => {
+    if (!gameStarted || gameOver) return;
+
+    const snake = snakeRef.current;
+    const head = { ...snake[0] };
+    head.x += directionRef.current.x;
+    head.y += directionRef.current.y;
+
+    // Colisão com parede
+    if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+      setGameOver(true);
+      return;
+    }
+
+    // Colisão consigo próprio
+    if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+      setGameOver(true);
+      return;
+    }
+
+    snake.unshift(head);
+
+    // Comeu NaN?
+    if (head.x === foodRef.current.x && head.y === foodRef.current.y) {
+      setScore(s => s + 1);
+      generateFood();
+    } else {
+      snake.pop();
+    }
+
+    draw();
+  }, [gameStarted, gameOver, draw, generateFood]);
+
+  const startGame = () => {
+    snakeRef.current = [{ x: 7, y: 7 }];
+    directionRef.current = { x: 1, y: 0 };
+    setScore(0);
+    setGameOver(false);
+    setGameStarted(true);
+    generateFood();
+    draw();
+
+    if (gameIntervalRef.current) clearInterval(gameIntervalRef.current);
+    gameIntervalRef.current = setInterval(moveSnake, 160); // velocidade boa
   };
 
-  const restart = () => {
-    endGame();
-    setTimeout(startGame, 100);
-  };
+  const changeDirection = useCallback((e) => {
+    if (!gameStarted || gameOver) return;
+
+    switch (e.key) {
+      case 'ArrowUp':
+        if (directionRef.current.y !== 1) directionRef.current = { x: 0, y: -1 };
+        break;
+      case 'ArrowDown':
+        if (directionRef.current.y !== -1) directionRef.current = { x: 0, y: 1 };
+        break;
+      case 'ArrowLeft':
+        if (directionRef.current.x !== 1) directionRef.current = { x: -1, y: 0 };
+        break;
+      case 'ArrowRight':
+        if (directionRef.current.x !== -1) directionRef.current = { x: 1, y: 0 };
+        break;
+    }
+  }, [gameStarted, gameOver]);
 
   useEffect(() => {
+    window.addEventListener('keydown', changeDirection);
+    return () => window.removeEventListener('keydown', changeDirection);
+  }, [changeDirection]);
+
+  useEffect(() => {
+    if (gameStarted) draw();
+  }, [gameStarted, draw]);
+
+  // Cleanup
+  useEffect(() => {
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (gameIntervalRef.current) clearInterval(gameIntervalRef.current);
     };
   }, []);
 
   return (
-    <div style={{ height: '100%', background: 'linear-gradient(180deg, #1e3a8a, #0f172a)', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 10px', fontFamily: 'system-ui, sans-serif', overflow: 'auto' }}>
-      <h1 style={{ fontSize: '2.6rem', margin: '8px 0 4px', textShadow: '0 0 20px #22c55e' }}>
-        🧪 Imputa os NaNs! 🧪
+    <div style={{ height: '100%', background: '#0f172a', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', padding: '20px' }}>
+      <h1 style={{ fontSize: '2.4rem', margin: '0 0 10px', textShadow: '0 0 20px #22c55e' }}>
+        🧪 NaN Eater 🧪
       </h1>
-      <p style={{ opacity: 0.9, marginBottom: '20px', fontSize: '1.25rem' }}>
-        Clica nos NaNs o mais rápido possível!
-      </p>
+      <p style={{ margin: '0 0 15px', opacity: 0.9 }}>Come os NaNs antes que o dataset morra!</p>
 
-      <div style={{ display: 'flex', gap: '50px', fontSize: '1.7rem', margin: '10px 0 20px' }}>
-        <div>Score: <span style={{ color: '#22c55e', fontWeight: 700 }}>{score}</span></div>
-        <div>Time: <span style={{ color: timeLeft > 10 ? '#fff' : '#ef4444', fontWeight: 700 }}>{timeLeft}</span></div>
+      <div style={{ marginBottom: '10px', fontSize: '1.5rem' }}>
+        Score: <strong style={{ color: '#22c55e' }}>{score}</strong>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', maxWidth: '440px', padding: '25px', background: '#0f172a', borderRadius: '20px', boxShadow: '0 15px 30px rgba(0,0,0,0.5)' }}>
-        {holes.map(hole => (
-          <div
-            key={hole.id}
-            onClick={() => handleClick(hole.id)}
-            style={{
-              background: '#1e2937',
-              borderRadius: '50%',
-              aspectRatio: '1',
-              position: 'relative',
-              cursor: 'pointer',
-              boxShadow: hole.active ? '0 0 25px #22c55e' : '0 8px 15px rgba(0,0,0,0.5)',
-              transform: hole.active ? 'scale(1.12)' : 'scale(1)',
-              transition: 'all 0.15s'
-            }}
-          >
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: `translate(-50%, -50%) scale(${hole.active ? 1 : 0})`,
-              fontSize: '4rem',
-              transition: 'all 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)'
-            }}>
-              {hole.symbol}
-            </div>
-          </div>
-        ))}
-      </div>
+      <canvas
+        ref={canvasRef}
+        width={GRID_SIZE * CELL_SIZE}
+        height={GRID_SIZE * CELL_SIZE}
+        style={{ border: '4px solid #22c55e', borderRadius: '12px', imageRendering: 'pixelated', boxShadow: '0 0 30px rgba(34, 197, 94, 0.4)' }}
+      />
 
-      {!gameActive && (
+      {!gameStarted && !gameOver && (
         <button
           onClick={startGame}
-          style={{ marginTop: '30px', padding: '16px 50px', fontSize: '1.5rem', background: '#22c55e', color: '#052e16', border: 'none', borderRadius: '50px', fontWeight: 700, boxShadow: '0 6px 0 #16a34a', cursor: 'pointer' }}
+          style={{ marginTop: '25px', padding: '14px 40px', fontSize: '1.4rem', background: '#22c55e', color: '#052e16', border: 'none', borderRadius: '50px', fontWeight: 700, cursor: 'pointer' }}
         >
           ▶️ START GAME
         </button>
       )}
 
-      {!gameActive && score > 0 && (
-        <div style={{ marginTop: '30px', background: 'rgba(15,23,42,0.95)', padding: '30px 40px', borderRadius: '16px', textAlign: 'center', maxWidth: '460px', boxShadow: '0 10px 25px rgba(0,0,0,0.6)' }}>
-          <h2 style={{ margin: 0, fontSize: '1.9rem' }}>
-            {score >= 25 ? '🥳 Dataset salvo!' : score >= 15 ? '🙂 Nada mal...' : '😵 Dataset morreu...'}
-          </h2>
-          <p style={{ fontSize: '1.6rem', margin: '15px 0' }}>
-            Pontuação final: <strong style={{ color: '#22c55e' }}>{score}</strong>
-          </p>
-          <button onClick={restart} style={{ padding: '12px 36px', background: '#22c55e', color: '#000', border: 'none', borderRadius: '50px', fontWeight: 700, fontSize: '1.2rem', cursor: 'pointer' }}>
-            Jogar outra vez
+      {gameOver && (
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <h2 style={{ color: '#ef4444' }}>Dataset corrupted...</h2>
+          <p style={{ fontSize: '1.4rem' }}>Pontuação final: <strong>{score}</strong></p>
+          <button onClick={startGame} style={{ padding: '12px 32px', background: '#22c55e', color: '#000', border: 'none', borderRadius: '50px', fontWeight: 700 }}>
+            Jogar novamente
           </button>
         </div>
       )}
+
+      <div style={{ marginTop: '20px', fontSize: '0.9rem', opacity: 0.7 }}>
+        Use as setas do teclado ← ↑ ↓ →
+      </div>
     </div>
   );
 }

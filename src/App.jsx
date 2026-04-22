@@ -6,6 +6,7 @@ const APP_META = {
   tables: { title: "Tables", initial: { x: 100, y: 40, w: 880, h: 560 } },
   charts: { title: "Charts", initial: { x: 140, y: 70, w: 900, h: 580 } },
   code:   { title: "Code — Python",  initial: { x: 110, y: 50, w: 920, h: 600 } },
+  game: { title: "Impute the NaNs!", initial: { x: 150, y: 70, w: 620, h: 680 } },
 };
 
 function App() {
@@ -146,6 +147,7 @@ function renderAppBody(id, { tableSel, setTableSel }) {
     case "tables": return <Tables selectedId={tableSel} onSelect={setTableSel}/>;
     case "charts": return <Charts/>;
     case "code":   return <Code/>;
+    case "game":   return <Game/>;
     default: return null;
   }
 }
@@ -176,6 +178,10 @@ function StartMenu({ onOpen, onTheme }) {
         <div className="start-item" onClick={() => onOpen("code")}>
           <span className="start-item-icon">{appIcon("code", 22)}</span>
           <span>Code</span>
+        </div>
+        <div className="start-item" onClick={() => onOpen("game")}>
+          <span className="start-item-icon">🎮</span>
+          <span>Impute the NaNs!</span>
         </div>
         <div className="start-sep"/>
         <div className="start-item" onClick={onTheme}>

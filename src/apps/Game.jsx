@@ -2,33 +2,46 @@
 const { useState, useEffect, useRef } = React;
 
 function Game() {
+  console.log('%c🎮 Game component MOUNTED!', 'color:#22c55e;font-size:16px;font-weight:bold');
+
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [gameActive, setGameActive] = useState(false);
   const [holes, setHoles] = useState([]);
 
-  const timerRef = useRef(null);
-  const popRef = useRef(null);
-  const holesRef = useRef([]);   // ← ref para evitar stale closure
+  const intervalRef = useRef(null);
+  const holesRef = useRef([]);
 
-  // Inicializa os 9 buracos
+  // Inicializa os buracos
   useEffect(() => {
     const initial = Array.from({ length: 9 }, (_, i) => ({
       id: i,
       active: false,
-      symbol: Math.random() > 0.6 ? 'NaN' : '❓'
+      symbol: Math.random() > 0.5 ? 'NaN' : '❓'
     }));
     setHoles(initial);
     holesRef.current = initial;
+    console.log('Holes initialized');
   }, []);
 
-  // Game loop dos NaNs (useEffect + setTimeout recursivo = sem stale closure)
-  useEffect(() => {
-    if (!gameActive) return;
+  const startGame = () => {
+    console.log('%c▶️ START GAME clicked!', 'color:#22c55e;font-weight:bold');
+    setScore(0);
+    setTimeLeft(30);
+    setGameActive(true);
 
-    const pop = () => {
-      if (!gameActive) return;
+    // Limpa intervalo antigo
+    if (intervalRef.current) clearInterval(intervalRef.current);
 
+    let currentScore = 0;
+    let currentTime = 30;
+
+    intervalRef.current = setInterval(() => {
+      // Timer
+      currentTime--;
+      setTimeLeft(currentTime);
+
+      // Pop NaN
       setHoles(prev => {
         const newHoles = prev.map(h => ({ ...h, active: false }));
         const idx = Math.floor(Math.random() * 9);
@@ -37,7 +50,7 @@ function Game() {
         return newHoles;
       });
 
-      // Desaparece sozinho
+      // Desaparece o NaN depois de 1.1s
       setTimeout(() => {
         setHoles(prev => {
           const newHoles = prev.map(h => h.active ? { ...h, active: false } : h);
@@ -46,44 +59,20 @@ function Game() {
         });
       }, 1100);
 
-      popRef.current = setTimeout(pop, 650);
-    };
-
-    popRef.current = setTimeout(pop, 300); // primeiro NaN rápido
-
-    return () => {
-      if (popRef.current) clearTimeout(popRef.current);
-    };
-  }, [gameActive]);
-
-  const startGame = () => {
-    console.log('%c🎮 Game started!', 'color:#22c55e;font-weight:bold');
-    setScore(0);
-    setTimeLeft(30);
-    setGameActive(true);
-
-    // Timer
-    timerRef.current = setInterval(() => {
-      setTimeLeft(t => {
-        if (t <= 1) {
-          endGame();
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
+      if (currentTime <= 0) {
+        endGame(currentScore);
+      }
+    }, 650);
   };
 
-  const endGame = () => {
-    console.log('%c⏹ Game ended. Final score:', 'color:#ef4444', score);
+  const endGame = (finalScore) => {
+    console.log('%c⏹ Game ended with score:', 'color:#ef4444', finalScore);
     setGameActive(false);
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (popRef.current) clearTimeout(popRef.current);
-  };
-
-  const restartGame = () => {
-    endGame();
-    setTimeout(startGame, 100);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setScore(finalScore);
   };
 
   const handleClick = (id) => {
@@ -91,7 +80,10 @@ function Game() {
     const hole = holesRef.current.find(h => h.id === id);
     if (!hole || !hole.active) return;
 
-    setScore(s => s + 1);
+    setScore(s => {
+      const newScore = s + 1;
+      return newScore;
+    });
 
     setHoles(prev => {
       const newHoles = prev.map(h => h.id === id ? { ...h, active: false } : h);
@@ -100,11 +92,15 @@ function Game() {
     });
   };
 
+  const restartGame = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setTimeout(startGame, 50);
+  };
+
   // Cleanup
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (popRef.current) clearTimeout(popRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
@@ -124,7 +120,7 @@ function Game() {
         🧪 Imputa os NaNs! 🧪
       </h1>
       <p style={{ opacity: 0.9, marginBottom: '20px', fontSize: '1.25rem' }}>
-        Click the NaNs before the dataset dies
+        Click the NaNs before the dataset dies 
       </p>
 
       <div style={{ display: 'flex', gap: '50px', fontSize: '1.65rem', margin: '15px 0' }}>
@@ -132,7 +128,6 @@ function Game() {
         <div>Time: <span style={{ color: timeLeft > 10 ? '#fff' : '#ef4444', fontWeight: 700 }}>{timeLeft}</span></div>
       </div>
 
-      {/* GRID */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',

@@ -122,7 +122,7 @@ function bfsNext(sx, sy, tx, ty, avoid = null) {
 }
 
 // ---------- Component ----------
-export default function NaNMuncher() {
+export default function Game() {
   const initial = useMemo(() => parseMaze(MAZE), []);
   const [tick, setTick] = useState(0);
   const [score, setScore] = useState(0);

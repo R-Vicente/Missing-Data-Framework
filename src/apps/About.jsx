@@ -51,6 +51,12 @@ function About() {
           (dataset loaders, imputation methods, amputation algorithms, metrics, and
           statistical tests) and the <code>nb_master_compute.py</code> driver script.
           All files can be downloaded individually or together.
+          If you want to reduce the number of methods, datasets or runs in the experiment, just delete or comment the
+          respective section in the utils.py file:
+          Line 37: Number of runs 
+          Line 194: Datasets Loader (delete or comment the ones you don't want)
+          Line 572: Methods Loader
+          
         </p>
 
         <div className="about-meta">

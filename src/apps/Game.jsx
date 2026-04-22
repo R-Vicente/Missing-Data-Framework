@@ -1,56 +1,51 @@
 /* global React */
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useCallback } = React;
 
 function Game() {
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [gameActive, setGameActive] = useState(false);
   const [holes, setHoles] = useState([]);
+
   const timerRef = useRef(null);
   const popRef = useRef(null);
 
-  // 9 cells 
+  // Inicializa as 9 células
   useEffect(() => {
-    const initial = Array.from({ length: 9 }, (_, i) => ({
+    const initialHoles = Array.from({ length: 9 }, (_, i) => ({
       id: i,
       active: false,
       symbol: Math.random() > 0.5 ? 'NaN' : '❓'
     }));
-    setHoles(initial);
+    setHoles(initialHoles);
   }, []);
 
-  const popRandomNaN = () => {
+  const popRandomNaN = useCallback(() => {
     if (!gameActive) return;
+
     setHoles(prev => {
-      const deactivated = prev.map(h => ({ ...h, active: false }));
+      // Desativa todos
+      let newHoles = prev.map(h => ({ ...h, active: false }));
+      
+      // Ativa um aleatório
       const idx = Math.floor(Math.random() * 9);
-      deactivated[idx].active = true;
-      return deactivated;
+      newHoles[idx] = { ...newHoles[idx], active: true };
+      
+      return newHoles;
     });
 
-    // bye bye
+    // Desaparece automaticamente depois de 1.2s
     setTimeout(() => {
       setHoles(prev => prev.map(h => h.active ? { ...h, active: false } : h));
     }, 1200);
-  };
+  }, [gameActive]);
 
-  const handleClick = (id) => {
-    if (!gameActive) return;
-    setHoles(prev => {
-      const hole = prev.find(h => h.id === id);
-      if (!hole?.active) return prev;
-
-      setScore(s => s + 1);
-
-      return prev.map(h => h.id === id ? { ...h, active: false } : h);
-    });
-  };
-
-  const startGame = () => {
+  const startGame = useCallback(() => {
     setScore(0);
     setTimeLeft(30);
     setGameActive(true);
 
+    // Timer
     timerRef.current = setInterval(() => {
       setTimeLeft(t => {
         if (t <= 1) {
@@ -61,25 +56,31 @@ function Game() {
       });
     }, 1000);
 
+    // Pop dos NaNs
     popRef.current = setInterval(popRandomNaN, 650);
-    setTimeout(popRandomNaN, 300); // primeiro NaN
-  };
+    setTimeout(popRandomNaN, 250); // primeiro NaN aparece rápido
+  }, [popRandomNaN]);
 
-  const endGame = () => {
+  const endGame = useCallback(() => {
     setGameActive(false);
     if (timerRef.current) clearInterval(timerRef.current);
     if (popRef.current) clearInterval(popRef.current);
-  };
+  }, []);
 
-  const restart = () => {
+  const restartGame = useCallback(() => {
     endGame();
-    // pequeno delay para limpar vis
-    setTimeout(startGame, 50);
-  };
+    // Pequeno delay para limpar visualmente
+    setTimeout(() => {
+      startGame();
+    }, 80);
+  }, [endGame, startGame]);
 
-  useEffect(() => () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (popRef.current) clearInterval(popRef.current);
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (popRef.current) clearInterval(popRef.current);
+    };
   }, []);
 
   return (
@@ -95,17 +96,18 @@ function Game() {
       overflow: 'auto'
     }}>
       <h1 style={{ fontSize: '2.6rem', margin: '8px 0 4px', textShadow: '0 0 20px #22c55e' }}>
-        Impute thos NaNs
+        Impute the NaNs!
       </h1>
       <p style={{ opacity: 0.9, marginBottom: '20px', fontSize: '1.25rem' }}>
-       Click on the NaNs before the Dataset dies!!
+        Click the NaNs before the dataset dies
       </p>
 
       <div style={{ display: 'flex', gap: '50px', fontSize: '1.65rem', margin: '15px 0' }}>
-        <div>Points: <span style={{ color: '#22c55e', fontWeight: 700 }}>{score}</span></div>
+        <div>Score: <span style={{ color: '#22c55e', fontWeight: 700 }}>{score}</span></div>
         <div>Time: <span style={{ color: timeLeft > 10 ? '#fff' : '#ef4444', fontWeight: 700 }}>{timeLeft}</span></div>
       </div>
 
+      {/* GRID */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
@@ -119,7 +121,11 @@ function Game() {
         {holes.map(hole => (
           <div
             key={hole.id}
-            onClick={() => handleClick(hole.id)}
+            onClick={() => {
+              if (!gameActive || !hole.active) return;
+              setScore(s => s + 1);
+              setHoles(prev => prev.map(h => h.id === hole.id ? { ...h, active: false } : h));
+            }}
             style={{
               background: '#1e2937',
               borderRadius: '50%',
@@ -146,7 +152,7 @@ function Game() {
         ))}
       </div>
 
-      {!gameActive ? (
+      {!gameActive && (
         <button
           onClick={startGame}
           style={{
@@ -162,11 +168,11 @@ function Game() {
             cursor: 'pointer'
           }}
         >
-          ▶️ Start Game
+          ▶️ START GAME
         </button>
-      ) : null}
+      )}
 
-      {/* Resultado final */}
+      {/* End screen */}
       {!gameActive && score > 0 && (
         <div style={{
           marginTop: '30px',
@@ -178,12 +184,12 @@ function Game() {
           boxShadow: '0 10px 25px rgba(0,0,0,0.6)'
         }}>
           <h2 style={{ margin: 0, fontSize: '1.9rem' }}>
-            {score >= 25 ? 'Dataset Saved well done!' : score >= 15 ? 'Not bad...' : 'You really need this paper, your imputation skills are not good...'}
+            {score >= 25 ? 'Dataset saved!' : score >= 15 ? 'Not bad...' : 'Dataset died of NaNs...'}
           </h2>
           <p style={{ fontSize: '1.6rem', margin: '15px 0' }}>
             Final score: <strong style={{ color: '#22c55e' }}>{score}</strong>
           </p>
-          <button onClick={restart} style={{
+          <button onClick={restartGame} style={{
             padding: '12px 36px',
             background: '#22c55e',
             color: '#000',
@@ -197,13 +203,6 @@ function Game() {
           </button>
         </div>
       )}
-
-      <style>{`
-        @keyframes hit {
-          0% { transform: translate(-50%, -50%) scale(1.4); }
-          100% { transform: translate(-50%, -50%) scale(0); }
-        }
-      `}</style>
     </div>
   );
 }

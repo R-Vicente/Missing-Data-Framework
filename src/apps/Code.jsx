@@ -88,6 +88,30 @@ function highlight(code) {
   ));
 }
 
+function fileIcon(name, size) {
+  if (name.endsWith('.md')) return <CsvIcon size={size}/>;
+  if (name.endsWith('.txt')) return <CsvIcon size={size}/>;
+  return <PyIcon size={size}/>;
+}
+
+function downloadFile(file) {
+  const blob = new Blob([file.code], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = file.name;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function downloadAll() {
+  CODE_FILES.forEach(f => {
+    const blob = new Blob([f.code], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = f.name;
+    a.click(); URL.revokeObjectURL(url);
+  });
+}
+
 function Code() {
   const [sel, setSel] = useStateCode(CODE_FILES[0].id);
   const file = CODE_FILES.find(f => f.id === sel);
@@ -107,16 +131,26 @@ function Code() {
             onClick={() => setSel(f.id)}
             style={{ paddingLeft: 26 }}
           >
-            <PyIcon size={14}/> {f.name}
+            {fileIcon(f.name, 14)} {f.name}
           </div>
         ))}
+        <div style={{ padding: "12px 14px 6px", borderTop: "1px solid oklch(0.12 0.02 250)", marginTop: 8 }}>
+          <button onClick={downloadAll} style={{
+            background: "oklch(0.30 0.06 250)", border: "1px solid oklch(0.40 0.06 250)",
+            color: "#fff", padding: "5px 10px", borderRadius: 2, fontSize: 11, cursor: "pointer", width: "100%"
+          }}>⬇ Download all files</button>
+        </div>
       </div>
 
       <div className="code-main">
         <div className="code-tabs">
-          <div className="code-tab active">
-            <PyIcon size={12}/> <span style={{ marginLeft: 6 }}>{file.name}</span>
+          <div className="code-tab active" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {fileIcon(file.name, 12)} <span>{file.name}</span>
           </div>
+          <button onClick={() => downloadFile(file)} style={{
+            marginLeft: "auto", background: "transparent", border: "none",
+            color: "oklch(0.68 0.02 250)", fontSize: 11, padding: "0 14px", cursor: "pointer"
+          }}>⬇ Download</button>
         </div>
         <div className="code-content">
           <div className="code-gutter">
@@ -125,7 +159,7 @@ function Code() {
           <pre className="code-pre">{highlight(file.code)}</pre>
         </div>
         <div className="code-statusbar">
-          <span>Python · UTF-8 · LF</span>
+          <span>{file.lang === "python" ? "Python" : file.lang} · UTF-8 · LF</span>
           <span>{lines.length} lines · {file.desc}</span>
         </div>
       </div>

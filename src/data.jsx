@@ -614,6 +614,7 @@ const DESKTOP_ICONS = [
   { id: "tables", label: "Tables", app: "tables" },
   { id: "charts", label: "Charts", app: "charts" },
   { id: "code",   label: "Code",   app: "code"   },
+  { id: "game", label: "NaN Hunter", app: "game" },
 ];
 
 window.PAPER = PAPER;

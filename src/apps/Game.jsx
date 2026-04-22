@@ -1,5 +1,5 @@
 /* global React */
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useRef } = React;
 
 function Game() {
   const canvasRef = useRef(null);
@@ -13,9 +13,11 @@ function Game() {
   const snakeRef = useRef([{ x: 7, y: 7 }]);
   const directionRef = useRef({ x: 1, y: 0 });
   const foodRef = useRef({ x: 5, y: 5 });
-  const gameIntervalRef = useRef(null);
+  const intervalRef = useRef(null);
 
-  const generateFood = useCallback(() => {
+  console.log('%c🎮 NaN Eater mounted', 'color:#22c55e;font-weight:bold');
+
+  const generateFood = () => {
     let newFood;
     do {
       newFood = {
@@ -24,9 +26,9 @@ function Game() {
       };
     } while (snakeRef.current.some(s => s.x === newFood.x && s.y === newFood.y));
     foodRef.current = newFood;
-  }, []);
+  };
 
-  const draw = useCallback(() => {
+  const draw = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -59,29 +61,31 @@ function Game() {
     });
 
     // NaN
-    ctx.font = 'bold 22px system-ui';
+    ctx.font = 'bold 23px system-ui';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('NaN', 
-      foodRef.current.x * CELL_SIZE + CELL_SIZE/2, 
-      foodRef.current.y * CELL_SIZE + CELL_SIZE/2 + 2);
-  }, []);
+      foodRef.current.x * CELL_SIZE + CELL_SIZE / 2, 
+      foodRef.current.y * CELL_SIZE + CELL_SIZE / 2);
+  };
 
-  const moveSnake = useCallback(() => {
+  const moveSnake = () => {
     if (!gameStarted || gameOver) return;
+
+    console.log('→ Moving snake... direction:', directionRef.current);
 
     const snake = snakeRef.current;
     const head = { ...snake[0] };
     head.x += directionRef.current.x;
     head.y += directionRef.current.y;
 
-    // Colisão parede
+    // Colisão com parede
     if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
       setGameOver(true);
       return;
     }
 
-    // Colisão própria
+    // Colisão consigo próprio
     if (snake.some(s => s.x === head.x && s.y === head.y)) {
       setGameOver(true);
       return;
@@ -98,7 +102,7 @@ function Game() {
     }
 
     draw();
-  }, [gameStarted, gameOver, draw, generateFood]);
+  };
 
   const startGame = () => {
     snakeRef.current = [{ x: 7, y: 7 }];
@@ -109,52 +113,47 @@ function Game() {
     generateFood();
     draw();
 
-    // Foca o canvas para receber teclas
     const canvas = canvasRef.current;
     if (canvas) canvas.focus();
 
-    if (gameIntervalRef.current) clearInterval(gameIntervalRef.current);
-    gameIntervalRef.current = setInterval(moveSnake, 160);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(moveSnake, 160);
   };
 
-  const handleKeyDown = useCallback((e) => {
-    console.log('Key pressed:', e.key);   // ← debug
+  const handleKeyDown = (e) => {
+    console.log('Key pressed:', e.key);
 
     if (!gameStarted || gameOver) return;
 
     switch (e.key) {
       case 'ArrowUp':
         if (directionRef.current.y !== 1) directionRef.current = { x: 0, y: -1 };
-        e.preventDefault();
         break;
       case 'ArrowDown':
         if (directionRef.current.y !== -1) directionRef.current = { x: 0, y: 1 };
-        e.preventDefault();
         break;
       case 'ArrowLeft':
         if (directionRef.current.x !== 1) directionRef.current = { x: -1, y: 0 };
-        e.preventDefault();
         break;
       case 'ArrowRight':
         if (directionRef.current.x !== -1) directionRef.current = { x: 1, y: 0 };
-        e.preventDefault();
         break;
     }
-  }, [gameStarted, gameOver]);
+    e.preventDefault();
+  };
 
-  // Event listener + focus
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      canvas.tabIndex = 0;           // permite receber focus
+      canvas.tabIndex = 0;
       canvas.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {
       if (canvas) canvas.removeEventListener('keydown', handleKeyDown);
-      if (gameIntervalRef.current) clearInterval(gameIntervalRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [handleKeyDown]);
+  }, []);
 
   return (
     <div style={{ height: '100%', background: '#0f172a', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: 'system-ui, sans-serif' }}>
@@ -197,7 +196,7 @@ function Game() {
       )}
 
       <div style={{ marginTop: '18px', fontSize: '0.95rem', opacity: 0.75 }}>
-        ← ↑ ↓ → 
+        ← ↑ ↓ →
       </div>
     </div>
   );

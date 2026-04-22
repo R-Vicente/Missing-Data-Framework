@@ -808,10 +808,7 @@ def impute_mean_mode(X_inc, var_types):
 
 
 def impute_knn(X_inc, var_types, k=5):
-    """k-NN with mixed distance: normalised Euclidean (cont) + overlap (cat).
-    Versão optimizada: exactamente os mesmos resultados, mas muito mais rápida.
-    (vectorização completa da selecção de donors e distâncias com NumPy;
-     o único loop Python restante é sobre as células em falta – inevitável)."""
+    """k-NN with mixed distance: normalised Euclidean (cont) + overlap (cat)."""
     X = X_inc.copy()
     n, p = X.shape
     cont_idx, cat_idx = get_type_indices(var_types)
@@ -822,8 +819,6 @@ def impute_knn(X_inc, var_types, k=5):
     sd = np.nanstd(X, axis=0)
     sd[sd == 0] = 1.0
 
-    # Máscara de observados actualizada após cada coluna (essencial para manter
-    # exactamente a mesma lógica do original quando há imputações em colunas anteriores)
     is_obs = ~np.isnan(X)
 
     for j in range(p):
@@ -855,7 +850,7 @@ def impute_knn(X_inc, var_types, k=5):
                 X[i, j] = mu[j]
                 continue
 
-            # Vectorized donor selection (substitui o list comprehension + all() lento)
+            # Vectorized donor selection
             donor_mask = np.all(is_obs[np.ix_(obs, usable)], axis=1)
             donors = obs[donor_mask]
 
@@ -890,7 +885,7 @@ def impute_knn(X_inc, var_types, k=5):
                 uv, uc = np.unique(vals_nn, return_counts=True)
                 X[i, j] = uv[np.argmax(uc)]
 
-        # Actualiza a máscara de observados para esta coluna (usada nas colunas seguintes)
+        # Update obs mask
         is_obs[miss, j] = True
 
     return X
@@ -1199,7 +1194,7 @@ AMPUTE_METHODS = {
     code: `# 6. TYPE-AWARE METRICS
 # ============================================================
 def var_stats(X):
-    """Versão segura contra colunas vazias ou all-NaN."""
+
     X = np.asarray(X, dtype=float)
     if X.size == 0 or X.shape[1] == 0:
         p = X.shape[1] if X.ndim > 1 else 0
@@ -1316,7 +1311,6 @@ def run_single(X, method_fn, ampute_fn, prop, var_types, rng_seed):
     return result
 
 
-# No utils.py → substitui run_mc por isto
 from joblib import Parallel, delayed
 
 # Methods that use n_jobs=-1 internally — don't wrap in joblib (core contention)

@@ -32,6 +32,11 @@ Coimbra Business School — ISCAC, Polytechnic Institute of Coimbra
    **Estimated runtime:** 8–12 hours on a modern machine (12th Gen i7, 16 GB RAM).
    Each checkpoint is saved as it completes, so the process can be interrupted
    and resumed (existing checkpoints are skipped).
+   If you want to reduce the number of methods, datasets or runs in the experiment, just delete or comment the
+   respective section in the utils.py file:
+   Line 37: Number of runs 
+   Line 194: Datasets Loader (delete or comment the ones you don't want)
+   Line 572: Methods Loader
 
 ## Files
 
@@ -46,8 +51,8 @@ Coimbra Business School — ISCAC, Polytechnic Institute of Coimbra
 The experiment computes 11 unique conditions:
 
 | Condition | Amputation | Rate | Methods | Replicates |
-|-----------|-----------|------|---------|------------|
-| Base | uniform | 20% | all 6 | 100 |
+|-----------|------------|------|---------|------------|
+| Base      | uniform    |  20% |   all 6 |   100      |
 | Amputation variants | by-variable, blockwise | 20% | all 6 | 100 |
 | MAR | mar-aggregate, mar-single | 20% | all 6 | 100 |
 | Degradation | uniform | 5%, 10%, 30%, 40%, 50% | all 6 | 100 |

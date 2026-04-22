@@ -32,25 +32,25 @@ function About() {
         <p>
           This site hosts supplementary material for the paper: extended result
           tables that did not fit in the main manuscript, figures, and the
-          analysis code used to produce them. Everything is organised as a
+          full analysis code used to produce them. Everything is organised as a
           virtual desktop — open the <strong>Tables</strong>, <strong>Charts</strong>,
           and <strong>Code</strong> folders from the desktop or Start menu.
         </p>
 
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec
-          odio. Praesent libero. Sed cursus ante dapibus diam. Sed nisi. Nulla
-          quis sem at nibh elementum imperdiet. Duis sagittis ipsum. Praesent
-          mauris. Fusce nec tellus sed augue semper porta. Mauris massa.
-          Vestibulum lacinia arcu eget nulla.
+          The <strong>Tables</strong> folder contains all 12 result tables, including
+          the complete NRMSE values across four normalisations, all five amputation
+          conditions, degradation curves across six missingness rates, PFC results
+          for mixed-type datasets, and the Friedman/Nemenyi statistical test summaries.
+          Each table can be downloaded as CSV.
         </p>
 
         <p>
-          Class aptent taciti sociosqu ad litora torquent per conubia nostra,
-          per inceptos himenaeos. Curabitur sodales ligula in libero. Sed
-          dignissim lacinia nunc. Curabitur tortor. Pellentesque nibh. Aenean
-          quam. In scelerisque sem at dolor. Maecenas mattis. Sed convallis
-          tristique sem. Proin ut ligula vel nunc egestas porttitor.
+          The <strong>Code</strong> folder contains the full source code needed to
+          reproduce every experiment reported in the paper: the <code>utils.py</code> library
+          (dataset loaders, imputation methods, amputation algorithms, metrics, and
+          statistical tests) and the <code>nb_master_compute.py</code> driver script.
+          All files can be downloaded individually or together.
         </p>
 
         <div className="about-meta">

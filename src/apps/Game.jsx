@@ -1,5 +1,5 @@
 /* global React */
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useRef } = React;
 
 function Game() {
   const [score, setScore] = useState(0);
@@ -9,38 +9,55 @@ function Game() {
 
   const timerRef = useRef(null);
   const popRef = useRef(null);
+  const holesRef = useRef([]);   // ← ref para evitar stale closure
 
-  // Inicializa as 9 células
+  // Inicializa os 9 buracos
   useEffect(() => {
-    const initialHoles = Array.from({ length: 9 }, (_, i) => ({
+    const initial = Array.from({ length: 9 }, (_, i) => ({
       id: i,
       active: false,
-      symbol: Math.random() > 0.5 ? 'NaN' : '❓'
+      symbol: Math.random() > 0.6 ? 'NaN' : '❓'
     }));
-    setHoles(initialHoles);
+    setHoles(initial);
+    holesRef.current = initial;
   }, []);
 
-  const popRandomNaN = useCallback(() => {
+  // Game loop dos NaNs (useEffect + setTimeout recursivo = sem stale closure)
+  useEffect(() => {
     if (!gameActive) return;
 
-    setHoles(prev => {
-      // Desativa todos
-      let newHoles = prev.map(h => ({ ...h, active: false }));
-      
-      // Ativa um aleatório
-      const idx = Math.floor(Math.random() * 9);
-      newHoles[idx] = { ...newHoles[idx], active: true };
-      
-      return newHoles;
-    });
+    const pop = () => {
+      if (!gameActive) return;
 
-    // Desaparece automaticamente depois de 1.2s
-    setTimeout(() => {
-      setHoles(prev => prev.map(h => h.active ? { ...h, active: false } : h));
-    }, 1200);
+      setHoles(prev => {
+        const newHoles = prev.map(h => ({ ...h, active: false }));
+        const idx = Math.floor(Math.random() * 9);
+        newHoles[idx].active = true;
+        holesRef.current = newHoles;
+        return newHoles;
+      });
+
+      // Desaparece sozinho
+      setTimeout(() => {
+        setHoles(prev => {
+          const newHoles = prev.map(h => h.active ? { ...h, active: false } : h);
+          holesRef.current = newHoles;
+          return newHoles;
+        });
+      }, 1100);
+
+      popRef.current = setTimeout(pop, 650);
+    };
+
+    popRef.current = setTimeout(pop, 300); // primeiro NaN rápido
+
+    return () => {
+      if (popRef.current) clearTimeout(popRef.current);
+    };
   }, [gameActive]);
 
-  const startGame = useCallback(() => {
+  const startGame = () => {
+    console.log('%c🎮 Game started!', 'color:#22c55e;font-weight:bold');
     setScore(0);
     setTimeLeft(30);
     setGameActive(true);
@@ -55,31 +72,39 @@ function Game() {
         return t - 1;
       });
     }, 1000);
+  };
 
-    // Pop dos NaNs
-    popRef.current = setInterval(popRandomNaN, 650);
-    setTimeout(popRandomNaN, 250); // primeiro NaN aparece rápido
-  }, [popRandomNaN]);
-
-  const endGame = useCallback(() => {
+  const endGame = () => {
+    console.log('%c⏹ Game ended. Final score:', 'color:#ef4444', score);
     setGameActive(false);
     if (timerRef.current) clearInterval(timerRef.current);
-    if (popRef.current) clearInterval(popRef.current);
-  }, []);
+    if (popRef.current) clearTimeout(popRef.current);
+  };
 
-  const restartGame = useCallback(() => {
+  const restartGame = () => {
     endGame();
-    // Pequeno delay para limpar visualmente
-    setTimeout(() => {
-      startGame();
-    }, 80);
-  }, [endGame, startGame]);
+    setTimeout(startGame, 100);
+  };
+
+  const handleClick = (id) => {
+    if (!gameActive) return;
+    const hole = holesRef.current.find(h => h.id === id);
+    if (!hole || !hole.active) return;
+
+    setScore(s => s + 1);
+
+    setHoles(prev => {
+      const newHoles = prev.map(h => h.id === id ? { ...h, active: false } : h);
+      holesRef.current = newHoles;
+      return newHoles;
+    });
+  };
 
   // Cleanup
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (popRef.current) clearInterval(popRef.current);
+      if (popRef.current) clearTimeout(popRef.current);
     };
   }, []);
 
@@ -96,7 +121,7 @@ function Game() {
       overflow: 'auto'
     }}>
       <h1 style={{ fontSize: '2.6rem', margin: '8px 0 4px', textShadow: '0 0 20px #22c55e' }}>
-        Impute the NaNs!
+        🧪 Imputa os NaNs! 🧪
       </h1>
       <p style={{ opacity: 0.9, marginBottom: '20px', fontSize: '1.25rem' }}>
         Click the NaNs before the dataset dies
@@ -121,11 +146,7 @@ function Game() {
         {holes.map(hole => (
           <div
             key={hole.id}
-            onClick={() => {
-              if (!gameActive || !hole.active) return;
-              setScore(s => s + 1);
-              setHoles(prev => prev.map(h => h.id === hole.id ? { ...h, active: false } : h));
-            }}
+            onClick={() => handleClick(hole.id)}
             style={{
               background: '#1e2937',
               borderRadius: '50%',
@@ -134,7 +155,7 @@ function Game() {
               cursor: 'pointer',
               boxShadow: '0 8px 15px rgba(0,0,0,0.5)',
               transition: 'transform 0.1s',
-              transform: hole.active ? 'scale(1.08)' : 'scale(1)'
+              transform: hole.active ? 'scale(1.12)' : 'scale(1)'
             }}
           >
             <div style={{
@@ -172,7 +193,6 @@ function Game() {
         </button>
       )}
 
-      {/* End screen */}
       {!gameActive && score > 0 && (
         <div style={{
           marginTop: '30px',

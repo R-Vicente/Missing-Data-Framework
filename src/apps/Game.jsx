@@ -15,7 +15,10 @@
  *   R to restart
  */
 
-import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+// Universal React hook access — works with <script type="text/babel"> (React global)
+// and with bundlers (where React is also globally available after being imported elsewhere,
+// or you can add `import React from 'react'` at the top yourself).
+const { useEffect, useMemo, useRef, useState, useCallback } = React;
 
 // ---------- Maze ----------
 // 19 cols x 21 rows. Legend: # wall, . NaN pellet, o power-cell, _ empty, G ghost spawn, P player spawn
@@ -122,7 +125,7 @@ function bfsNext(sx, sy, tx, ty, avoid = null) {
 }
 
 // ---------- Component ----------
-export default function Game() {
+function Game() {
   const initial = useMemo(() => parseMaze(MAZE), []);
   const [tick, setTick] = useState(0);
   const [score, setScore] = useState(0);
@@ -747,3 +750,6 @@ function Overlay({ status, onStart, onRestart, level }) {
     </div>
   );
 }
+
+// Expose globally for <script type="text/babel"> setups (no bundler).
+if (typeof window !== 'undefined') window.Game = Game;

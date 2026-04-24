@@ -561,40 +561,40 @@ const TABLES = [
 
 const CHARTS = [
   {
-    id: "f1", name: "Figure 1 — Amputation algorithms.png",
+    id: "f1", name: "fig1_amputation.png",
     title: "Figure 1. Three amputation algorithms for MCAR.",
-    caption: "Uniform, by-variable, and blockwise amputation on Heart Disease (n=303, p=13). Studies using the label MCAR may implement any of these variants.",
-    kind: "heatmap",
+    caption: "Uniform, by-variable, and blockwise amputation illustrated on an 8-variable, 20-observation matrix at 20% missingness. Studies using the label MCAR may implement any of these variants, yet the distinction is almost never reported.",
+    img: "img/fig1_amputation.png",
   },
   {
-    id: "f2", name: "Figure 2 — NRMSE scale factor.png",
-    title: "Figure 2. Scale factor between NRMSE_sd and NRMSE_range per dataset.",
-    caption: "The factor ranges from 3.6 (Auto MPG) to 9.7 (California Housing), driven by R/SD heterogeneity.",
-    kind: "bars",
+    id: "f2", name: "fig2_scale_factor.png",
+    title: "Figure 2. Scale factor between NRMSE normalisations per dataset.",
+    caption: "The ratio NRMSE_sd / NRMSE_range (computed for missForest under 20% MCAR) ranges from 3.6 (Auto MPG) to 9.7 (California Housing). Two studies using different denominators are computing genuinely different quantities.",
+    img: "img/fig2_scale_factor.png",
   },
   {
-    id: "f3", name: "Figure 3 — Ranking changes.png",
-    title: "Figure 3. Ranking change per method across amputation algorithms.",
-    caption: "Under MAR, missForest gains rank on most datasets while MICE loses rank, particularly on Breast Cancer and California Housing.",
-    kind: "paired",
+    id: "f3", name: "fig3_rank_change.png",
+    title: "Figure 3. Mean rank shift: MCAR → MAR-aggregate.",
+    caption: "missForest improves from rank 2.08 (MCAR) to 1.92 (MAR-aggregate). MICE worsens from 2.75 to 2.83. IterReg worsens most sharply, from 3.33 to 3.92. The Friedman test among competitive methods shifts from non-significant (p = 0.147) to significant (p = 0.031).",
+    img: "img/fig3_rank_change.png",
   },
   {
-    id: "f4", name: "Figure 4 — Degradation curves.png",
+    id: "f4", name: "fig4_degradation.png",
     title: "Figure 4. Degradation curves: NRMSE_sd across missingness rates (5%–50%).",
-    caption: "All methods converge toward 1.0 at high rates. SoftImpute overtakes at 40–50% on six datasets. Heart Failure shows convergence from above.",
-    kind: "lines",
+    caption: "All methods converge toward NRMSE_sd ≈ 1.0 at high rates. SoftImpute overtakes at 40–50% on six datasets. Heart Failure converges from above (methods worse than baseline). Penguins: k-NN leads at every rate.",
+    img: "img/fig4_degradation.png",
   },
   {
-    id: "f5", name: "Figure 5 — MC convergence.png",
+    id: "f5", name: "fig5_convergence.png",
     title: "Figure 5. Monte Carlo convergence: CI half-width vs replicates.",
-    caption: "At 100 replicates, CI half-width is below 0.013 for 9/12 datasets (k-NN). California Housing requires more replicates (CI = 0.022).",
-    kind: "lines",
+    caption: "(a) k-NN across 12 datasets: at 100 replicates, CI half-width is below 0.013 for 9/12 datasets. California Housing is the outlier (CI = 0.022). (b) k-NN vs SoftImpute on high-variance datasets, showing method-dependent convergence rates.",
+    img: "img/fig5_convergence.png",
   },
   {
-    id: "f6", name: "Figure 6 — Critical difference diagrams.png",
+    id: "f6", name: "fig6_cd_diagrams.png",
     title: "Figure 6. Critical difference diagrams (Demšar, 2006).",
-    caption: "Under MCAR, no pair of competitive methods is significantly different (Nemenyi CD = 1.76). Under MAR-aggregate, missForest separates from IterReg.",
-    kind: "heatmap",
+    caption: "(a) Under MCAR, all competitive methods are connected by bars — no pair is significantly different at Nemenyi CD = 1.76. (b) Under MAR-aggregate, missForest (rank 1.92) separates from IterReg (3.92), though it remains tied with MICE, k-NN, and SoftImpute.",
+    img: "img/fig6_cd_diagrams.png",
   },
 ];
 
@@ -614,7 +614,6 @@ const DESKTOP_ICONS = [
   { id: "tables", label: "Tables", app: "tables" },
   { id: "charts", label: "Charts", app: "charts" },
   { id: "code",   label: "Code",   app: "code"   },
-  { id: "game", label: "NaN Hunter", app: "game" },
 ];
 
 window.PAPER = PAPER;
